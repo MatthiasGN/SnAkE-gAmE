@@ -9,23 +9,47 @@ class Cube:
         self.diry = diry
         self.colour = colour
         self.surf = surf
+        
+        self.dir = None
+
 
     def move(self, dirx, diry):
         self.dirx = dirx
         self.diry = diry
+
+        if self.dirx == 0 and self.diry == -1:
+            self.dir = 'U'
+        elif self.dirx == 1 and self.diry == 0:
+            self.dir = 'R'
+        elif self.dirx == 0 and self.diry == 1:
+            self.dir = 'D'
+        elif self.dirx == -1 and self.diry == 0:
+            self.dir = 'L'
+
         self.pos = (self.pos[0]+self.dirx, self.pos[1]+self.diry)
 
-    def draw(self, cell_width, surface, head=False, tail=False):
+    def draw(self, cell_width, surface, head=False, tail=False, dir=None):
         x = self.pos[0]
         y = self.pos[1]
 
         r = 10
-        if head:
-            if head and tail:
-                pygame.draw.rect(surface, self.colour, (x*cell_width+1, y*cell_width+1, cell_width-2, cell_width-2), border_radius=r)
-            else:
+        if head and tail:
+            pygame.draw.rect(surface, self.colour, (x*cell_width+1, y*cell_width+1, cell_width-2, cell_width-2), border_radius=r)
+        elif head or tail:
+            # Rounding edges according to head or tail
+            if (head and self.dir == 'U') or (tail and dir == 'D'):
                 pygame.draw.rect(surface, self.colour, (x*cell_width+1, y*cell_width+1, cell_width-2, cell_width-2), border_top_left_radius=r, border_top_right_radius=r)
-                
+            elif (head and self.dir == 'R') or (tail and dir == 'L'):
+                pygame.draw.rect(surface, self.colour, (x*cell_width+1, y*cell_width+1, cell_width-2, cell_width-2), border_top_right_radius=r, border_bottom_right_radius=r)
+            elif (head and self.dir == 'D') or (tail and dir == 'U'):
+                pygame.draw.rect(surface, self.colour, (x*cell_width+1, y*cell_width+1, cell_width-2, cell_width-2), border_bottom_right_radius=r, border_bottom_left_radius=r)
+            elif (head and self.dir == 'L') or (tail and dir == 'R'):
+                pygame.draw.rect(surface, self.colour, (x*cell_width+1, y*cell_width+1, cell_width-2, cell_width-2), border_bottom_left_radius=r, border_top_left_radius=r)
+        else:
+            pygame.draw.rect(surface, self.colour, (x*cell_width+1, y*cell_width+1, cell_width-2, cell_width-2))
+
+        #Eyes
+        if head:
             cell_third = cell_width // 3
             cell_quarter = cell_width // 4
 
@@ -45,12 +69,6 @@ class Cube:
 
             pygame.draw.circle(surface, (0,0,0), eye1_middle, radius=3)
             pygame.draw.circle(surface, (0,0,0), eye2_middle, radius=3)
-        
-        elif tail and not head:
-            pygame.draw.rect(surface, self.colour, (x*cell_width+1, y*cell_width+1, cell_width-2, cell_width-2), border_bottom_left_radius=r, border_bottom_right_radius=r)
-        
-        else:
-            pygame.draw.rect(surface, self.colour, (x*cell_width+1, y*cell_width+1, cell_width-2, cell_width-2))
 
 
 class Snack:
@@ -138,13 +156,16 @@ class Snake:
             if x>= 0 or x<rows-1 or y>=0 or y<cols:
                 head = False
                 tail = False
+                dir = None
 
                 if i == 0:
                     head=True
                 if i == len(self.body)-1:
                     tail=True
+                    if i > 0:
+                        dir = self.body[i-1].dir
 
-                cube.draw(cell_width, surface, head=head, tail=tail)
+                cube.draw(cell_width, surface, head=head, tail=tail, dir=dir)
 
 
     def add_cube(self):
