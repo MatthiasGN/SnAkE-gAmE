@@ -3,26 +3,68 @@ import random
 import pygame
 
 class Cube:
-    def __init__(self, pos, dirx=1, diry=0, colour=(255,0,0)):
+    def __init__(self, pos, dirx=1, diry=0, colour=(255,0,0), surf=None):
         self.pos = pos
         self.dirx = dirx
         self.diry = diry
         self.colour = colour
+        self.surf = surf
 
     def move(self, dirx, diry):
         self.dirx = dirx
         self.diry = diry
         self.pos = (self.pos[0]+self.dirx, self.pos[1]+self.diry)
 
+    def draw(self, cell_width, surface, head=False, tail=False):
+        x = self.pos[0]
+        y = self.pos[1]
+
+        r = 10
+        if head:
+            if head and tail:
+                pygame.draw.rect(surface, self.colour, (x*cell_width+1, y*cell_width+1, cell_width-2, cell_width-2), border_radius=r)
+            else:
+                pygame.draw.rect(surface, self.colour, (x*cell_width+1, y*cell_width+1, cell_width-2, cell_width-2), border_top_left_radius=r, border_top_right_radius=r)
+                
+            cell_third = cell_width // 3
+            cell_quarter = cell_width // 4
+
+            eye1_middle = (x*cell_width+3*cell_quarter, y*cell_width+cell_third)
+            eye2_middle = (x*cell_width+3*cell_quarter, y*cell_width+2*cell_third)
+
+            if self.diry == 1:
+                eye1_middle = (x*cell_width+cell_quarter, y*cell_width+2*cell_third)
+            elif self.diry == -1:
+                eye2_middle = (x*cell_width+cell_quarter, y*cell_width+cell_third)
+            elif self.dirx == -1:
+                eye1_middle = (x*cell_width+cell_quarter, y*cell_width+2*cell_third)
+                eye2_middle = (x*cell_width+cell_quarter, y*cell_width+cell_third)
+
+            pygame.draw.circle(surface, (255,255,255), eye1_middle, radius=6)
+            pygame.draw.circle(surface, (255,255,255), eye2_middle, radius=6)
+
+            pygame.draw.circle(surface, (0,0,0), eye1_middle, radius=3)
+            pygame.draw.circle(surface, (0,0,0), eye2_middle, radius=3)
+        
+        elif tail and not head:
+            pygame.draw.rect(surface, self.colour, (x*cell_width+1, y*cell_width+1, cell_width-2, cell_width-2), border_bottom_left_radius=r, border_bottom_right_radius=r)
+        
+        else:
+            pygame.draw.rect(surface, self.colour, (x*cell_width+1, y*cell_width+1, cell_width-2, cell_width-2))
+
+
+class Snack:
+    def __init__(self, pos, surf):
+        self.pos = pos
+        self.surf = surf
+
     def draw(self, cell_width, surface):
         x = self.pos[0]
         y = self.pos[1]
-        pygame.draw.rect(surface, self.colour, (x*cell_width+1, y*cell_width+1, cell_width-2, cell_width-2))
-
-
+        
+        surface.blit(self.surf, (x*cell_width, y*cell_width))
 
 class Snake:
-
     body = []
     turns = {}
 
@@ -36,24 +78,26 @@ class Snake:
         # Loop through cubes in the snake and move each cube in the correct direction.
         # Have to take note of turns so that each block moves appropriately.
 
-        if left or right or up or down:
-            if left and (self.head.dirx != 1):
-                self.dirx = -1
-                self.diry = 0
-
-            if right and (self.head.dirx != -1):
-                self.dirx = 1
-                self.diry = 0
-            
-            if up and (self.head.diry != 1):
-                self.dirx = 0
-                self.diry = -1
-            
-            if down and (self.head.diry != -1):
-                self.dirx = 0
-                self.diry = 1
-
+        if left and (self.head.dirx != 1):
+            self.dirx = -1
+            self.diry = 0
             self.turns[self.head.pos] = [self.dirx, self.diry]
+
+        if right and (self.head.dirx != -1):
+            self.dirx = 1
+            self.diry = 0
+            self.turns[self.head.pos] = [self.dirx, self.diry]
+        
+        if up and (self.head.diry != 1):
+            self.dirx = 0
+            self.diry = -1
+            self.turns[self.head.pos] = [self.dirx, self.diry]
+        
+        if down and (self.head.diry != -1):
+            self.dirx = 0
+            self.diry = 1
+            self.turns[self.head.pos] = [self.dirx, self.diry]
+
 
         # print("Turns: " + str(self.turns))
 
@@ -84,21 +128,24 @@ class Snake:
         
     def draw(self, cell_width, rows, cols, surface):
         for i, cube in enumerate(self.body):
+            x = cube.pos[0]
+            y = cube.pos[1]
 
             # When a snack is eaten, if the snake's tail is touching the border,
             # the program will attempt to draw a cube outside the borders of the surface.
             # So just avoid drawing these cubes, and once they are within the borders they
             # can once again be drawn properly.
-            if cube.pos[0]>= 0 or cube.pos[0]<rows-1 or cube.pos[1]>=0 or cube.pos[1]<cols:
-                cube.draw(cell_width, surface)
-            # if i == 0:
-            #     cube_width = width // rows
-            #     eyes_centre = cube_width // 3
-            #     radius = 3
-            #     eye1_middle = (cube.pos[0]*cube_width, cube.pos[1]*cube_width+eyes_centre)
-            #     eye2_middle = (cube.pos[0]*cube_width, cube.pos[1]*cube_width+eyes_centre)
-            #     pygame.draw.circle(surface, (100,100,100), eye1_middle, radius)
-            #     pygame.draw.circle(surface, (100,100,100), eye2_middle, radius)
+            if x>= 0 or x<rows-1 or y>=0 or y<cols:
+                head = False
+                tail = False
+
+                if i == 0:
+                    head=True
+                if i == len(self.body)-1:
+                    tail=True
+
+                cube.draw(cell_width, surface, head=head, tail=tail)
+
 
     def add_cube(self):
         tail = self.body[-1]
@@ -141,7 +188,7 @@ def draw_grid(cell_width, rows, cols, surface):
 def draw_window(cell_width, rows, cols, snake, snack, surface):
     surface.fill((0,0,0))
     snack.draw(cell_width, surface)
-    snake.draw(cell_width, surface)
+    snake.draw(cell_width, rows, cols, surface)
     draw_grid(cell_width, rows, cols, surface)
     pygame.display.update()
 
@@ -200,10 +247,14 @@ def main():
 
     width = rows*cell_width
     height = cols*cell_width
-
+    
     surf = pygame.display.set_mode((height, width))
     snake = Snake((255,255,0), (rows//2,cols//2))
-    snack = Cube((random_snack(snake, rows, cols)),0,0,(255,0,0))
+
+    snack_file = "snack.png"
+    snack_surf = pygame.image.load(snack_file).convert_alpha()
+    snack_surf = pygame.transform.scale(snack_surf, (cell_width, cell_width))
+    snack = Snack((random_snack(snake, rows, cols)), snack_surf)
 
     score = 0
     high_score = 0
@@ -228,9 +279,16 @@ def main():
                 break
 
             elif keys[pygame.K_p]:
-                pause_game(height, width, surf)
+                pause = True
+                while pause:
+                    for event in pygame.event.get():
+                        keys = pygame.key.get_pressed()
+                        if keys[pygame.K_p]:
+                            pause = False
+                            break
+                # pause_game(height, width, surf)
                 break
-            
+
             if keys[pygame.K_LEFT]:
                 left = True
             elif keys[pygame.K_RIGHT]:
@@ -249,7 +307,7 @@ def main():
             if head_pos == snack.pos:
                 score += 1
                 snake.add_cube()
-                snack = Cube((random_snack(snake, rows, cols)),0,0,(255,0,0))
+                snack = Snack((random_snack(snake, rows, cols)), snack_surf)
                 print("delishous")
 
             # Hit border
