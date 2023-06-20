@@ -34,35 +34,35 @@ class Cube:
 
         r = 10
         if head and tail:
-            pygame.draw.rect(surface, self.colour, (x*cell_width+1, y*cell_width+1, cell_width-2, cell_width-2), border_radius=r)
+            pygame.draw.rect(surface, self.colour, (x*cell_width+1, title_area_height+y*cell_width+1, cell_width-2, cell_width-2), border_radius=r)
         elif head or tail:
             # Rounding edges according to head or tail
             if (head and self.dir == 'U') or (tail and dir == 'D'):
-                pygame.draw.rect(surface, self.colour, (x*cell_width+1, y*cell_width+1, cell_width-2, cell_width-2), border_top_left_radius=r, border_top_right_radius=r)
+                pygame.draw.rect(surface, self.colour, (x*cell_width+1, title_area_height+y*cell_width+1, cell_width-2, cell_width-2), border_top_left_radius=r, border_top_right_radius=r)
             elif (head and self.dir == 'R') or (tail and dir == 'L'):
-                pygame.draw.rect(surface, self.colour, (x*cell_width+1, y*cell_width+1, cell_width-2, cell_width-2), border_top_right_radius=r, border_bottom_right_radius=r)
+                pygame.draw.rect(surface, self.colour, (x*cell_width+1, title_area_height+y*cell_width+1, cell_width-2, cell_width-2), border_top_right_radius=r, border_bottom_right_radius=r)
             elif (head and self.dir == 'D') or (tail and dir == 'U'):
-                pygame.draw.rect(surface, self.colour, (x*cell_width+1, y*cell_width+1, cell_width-2, cell_width-2), border_bottom_right_radius=r, border_bottom_left_radius=r)
+                pygame.draw.rect(surface, self.colour, (x*cell_width+1, title_area_height+y*cell_width+1, cell_width-2, cell_width-2), border_bottom_right_radius=r, border_bottom_left_radius=r)
             elif (head and self.dir == 'L') or (tail and dir == 'R'):
-                pygame.draw.rect(surface, self.colour, (x*cell_width+1, y*cell_width+1, cell_width-2, cell_width-2), border_bottom_left_radius=r, border_top_left_radius=r)
+                pygame.draw.rect(surface, self.colour, (x*cell_width+1, title_area_height+y*cell_width+1, cell_width-2, cell_width-2), border_bottom_left_radius=r, border_top_left_radius=r)
         else:
-            pygame.draw.rect(surface, self.colour, (x*cell_width+1, y*cell_width+1, cell_width-2, cell_width-2))
+            pygame.draw.rect(surface, self.colour, (x*cell_width+1, title_area_height+y*cell_width+1, cell_width-2, cell_width-2))
 
         #Eyes
         if head:
             cell_third = cell_width // 3
             cell_quarter = cell_width // 4
 
-            eye1_middle = (x*cell_width+3*cell_quarter, y*cell_width+cell_third)
-            eye2_middle = (x*cell_width+3*cell_quarter, y*cell_width+2*cell_third)
+            eye1_middle = (x*cell_width+3*cell_quarter, title_area_height+y*cell_width+cell_third)
+            eye2_middle = (x*cell_width+3*cell_quarter, title_area_height+y*cell_width+2*cell_third)
 
             if self.diry == 1:
-                eye1_middle = (x*cell_width+cell_quarter, y*cell_width+2*cell_third)
+                eye1_middle = (x*cell_width+cell_quarter, title_area_height+y*cell_width+2*cell_third)
             elif self.diry == -1:
-                eye2_middle = (x*cell_width+cell_quarter, y*cell_width+cell_third)
+                eye2_middle = (x*cell_width+cell_quarter, title_area_height+y*cell_width+cell_third)
             elif self.dirx == -1:
-                eye1_middle = (x*cell_width+cell_quarter, y*cell_width+2*cell_third)
-                eye2_middle = (x*cell_width+cell_quarter, y*cell_width+cell_third)
+                eye1_middle = (x*cell_width+cell_quarter, title_area_height+y*cell_width+2*cell_third)
+                eye2_middle = (x*cell_width+cell_quarter, title_area_height+y*cell_width+cell_third)
 
             pygame.draw.circle(surface, (255,255,255), eye1_middle, radius=6)
             pygame.draw.circle(surface, (255,255,255), eye2_middle, radius=6)
@@ -79,8 +79,7 @@ class Snack:
     def draw(self, cell_width, surface):
         x = self.pos[0]
         y = self.pos[1]
-        
-        surface.blit(self.surf, (x*cell_width, y*cell_width))
+        surface.blit(self.surf, (x*cell_width, title_area_height+y*cell_width))
 
 class Snake:
     body = []
@@ -196,18 +195,21 @@ class Snake:
 
 def draw_grid(cell_width, rows, cols, surface):
     x = 0
-    y = 0
+    y = title_area_height
 
     for row in range(rows):
         x += cell_width
-        pygame.draw.line(surface, (255,255,255), (x,0), (x,cell_width*rows))
+        pygame.draw.line(surface, (255,255,255), (x,title_area_height), (x,title_area_height+cell_width*rows))
 
     for col in range(cols):
-        y += cell_width
-        pygame.draw.line(surface, (255,255,255), (0,y), (cell_width*cols,y))
+        if y == title_area_height: # First line should be thicker
+            pygame.draw.line(surface, (255,255,255), (0,y), (0+cell_width*cols,y), width=2)
+            y += cell_width
+        else:
+            pygame.draw.line(surface, (255,255,255), (0,y), (0+cell_width*cols,y))
+            y += cell_width
 
 def draw_window(cell_width, rows, cols, snake, snack, surface):
-    surface.fill((0,0,0))
     snack.draw(cell_width, surface)
     snake.draw(cell_width, rows, cols, surface)
     draw_grid(cell_width, rows, cols, surface)
@@ -251,13 +253,14 @@ def pause_game(height, width, surface):
 
         pygame.display.update()
 
-def reset_game(snake, snack, rows, cols, score, high_score):
+def reset_game(snake, snack, rows, cols, score, best):
     snake.reset(rows, cols)
-    if score > high_score:
-        high_score = score
+    if score > best:
+        best = score
+        print("New best! " + str(best))
     score = 0
     snack.pos = random_snack(snake, rows, cols)
-    return score, high_score
+    return score, best
 
 def main():
     pygame.init()
@@ -266,19 +269,39 @@ def main():
     cols = 20
     cell_width = 30
 
+    global title_area_height
+    title_area_height = 80
+
+    best = 0
+    score = 0
+
     width = rows*cell_width
-    height = cols*cell_width
+    height = cols*cell_width + title_area_height
     
-    surf = pygame.display.set_mode((height, width))
+    surf = pygame.display.set_mode((width, height))
     snake = Snake((255,255,0), (rows//2,cols//2))
 
     snack_file = "snack.png"
+    blocky_font = "blocky.ttf"
     snack_surf = pygame.image.load(snack_file).convert_alpha()
     snack_surf = pygame.transform.scale(snack_surf, (cell_width, cell_width))
     snack = Snack((random_snack(snake, rows, cols)), snack_surf)
 
-    score = 0
-    high_score = 0
+    title_surf = pygame.font.Font(blocky_font, 50).render("sNaKe GaMe", True, (255,255,0))
+    title_rect = title_surf.get_rect(center=(width//2, title_area_height//2+5))
+
+    best_text_surf = pygame.font.Font(blocky_font, 13).render("Best", True, (255,0,255))
+    best_text_rect = best_text_surf.get_rect(center=(width//12, 2*title_area_height//7))
+
+    score_text_surf = pygame.font.Font(blocky_font, 13).render("Score", True, (255,0,255))
+    score_text_rect = score_text_surf.get_rect(center=(11*width//12, 2*title_area_height//7))
+
+    best_surf = pygame.font.Font(blocky_font, 24).render(str(best), True, (255,0,255))
+    best_rect = best_surf.get_rect(center=(width//12, 2*title_area_height//3+3))
+
+    score_surf = pygame.font.Font(blocky_font, 24).render(str(score), True, (255,0,255))
+    score_rect = score_surf.get_rect(center=(11*width//12, 2*title_area_height//3+3))
+
 
     play = True
     clock = pygame.time.Clock()
@@ -286,6 +309,7 @@ def main():
     while play is True:
         pygame.time.delay(50)
         clock.tick(10)
+        purple_title = False
 
         left = right = up = down = False
         for event in pygame.event.get():
@@ -331,6 +355,14 @@ def main():
                 snack = Snack((random_snack(snake, rows, cols)), snack_surf)
                 print("delishous")
 
+                title_surf = pygame.font.Font(blocky_font, 52).render("sNaKe GaMe", True, (0,255,0))
+                title_rect = title_surf.get_rect(center=(width//2, title_area_height//2+5))
+
+                purple_title = True
+
+                score_surf = pygame.font.Font(blocky_font, 24).render(str(score), True, (255,0,255))
+                score_rect = score_surf.get_rect(center=(11*width//12, 2*title_area_height//3+3))
+
             # Hit border
             elif (
                 dx == -1 and head_pos[0] < 0 or
@@ -338,18 +370,34 @@ def main():
                 dy == 1 and head_pos[1] >= rows or
                 dy == -1 and head_pos[1] < 0):
 
-                score, high_score = reset_game(snake, snack, rows, cols, score, high_score)
+                score, best = reset_game(snake, snack, rows, cols, score, best)
+                best_surf = pygame.font.Font(blocky_font, 24).render(str(best), True, (255,0,255))
+                best_rect = best_surf.get_rect(center=(width//12, 2*title_area_height//3+3))
                 print("Borders are not your friend.")
             
             # Hit itself
             for cube in snake.body[1:]:
                 if head_pos == cube.pos:
-                    score, high_score = reset_game(snake, snack, rows, cols, score, high_score)
+                    score, best = reset_game(snake, snack, rows, cols, score, best)
+                    best_surf = pygame.font.Font(blocky_font, 24).render(str(best), True, (255,0,255))
+                    best_rect = best_surf.get_rect(center=(width//12, 2*title_area_height//3+3))
                     print("Congrats, you played (hit) yaself")
                     break
+            
+            pygame.display.set_caption('SnAkE gAmE.  Score: %s  High Score: %s' % (score, best))
 
-            pygame.display.set_caption('SnAkE gAmE.  Score: %s  High Score: %s' % (score, high_score))
+            surf.fill((0,0,0))
+            surf.blit(title_surf, title_rect)
+            surf.blit(best_text_surf, best_text_rect)
+            surf.blit(score_text_surf, score_text_rect)
+            surf.blit(best_surf, best_rect)
+            surf.blit(score_surf, score_rect)
             draw_window(cell_width, rows, cols, snake, snack, surf)
+
+            if purple_title:
+                title_surf = pygame.font.Font(blocky_font, 50).render("sNaKe GaMe", True, (255,255,0))
+                title_rect = title_surf.get_rect(center=(width//2, title_area_height//2+5))
+
 
     pygame.quit()
 
