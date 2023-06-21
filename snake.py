@@ -384,7 +384,7 @@ def main():
                     print("Congrats, you played (hit) yaself")
                     break
             
-            pygame.display.set_caption('SnAkE gAmE.  Score: %s  High Score: %s' % (score, best))
+            pygame.display.set_caption('sNaKe GaMe')
 
             surf.fill((0,0,0))
             surf.blit(title_surf, title_rect)
