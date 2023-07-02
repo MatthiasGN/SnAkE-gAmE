@@ -2,7 +2,7 @@
 
 Classic snake game built in Python.
 
-![Screenshot](/snake_demo.gif?raw=true "Snake-demo")
+![Snake GIF](/snake_demo.gif?raw=true "Snake-demo")
 
 Run ``` snake.py ``` to play.
 
